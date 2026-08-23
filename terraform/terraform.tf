@@ -1,9 +1,9 @@
 #==============================================================#
-# File      :   terraform.yml
+# File      :   terraform.tf
 # Desc      :   1-node cloud vm env for x86_64/aarch64
 # Ctime     :   2020-05-12
-# Mtime     :   2026-08-12
-# Path      :   terraform/terraform.yml
+# Mtime     :   2026-08-24
+# Path      :   terraform/terraform.tf
 # Docs      :   https://pigsty.io/docs/deploy/terraform
 # License   :   Apache-2.0 @ https://pigsty.io/docs/about/license/
 # Copyright :   2018-2026  Ruohang Feng / Vonng (rh@vonng.com)
@@ -81,7 +81,7 @@ locals {
 }
 
 #===========================================================#
-# Terraform Provider
+# Provider Requirements
 #===========================================================#
 terraform {
   required_version = ">= 1.0"

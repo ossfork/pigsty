@@ -1,9 +1,9 @@
 #==============================================================#
-# File      :   aws-cn.yml
+# File      :   aws-cn.tf
 # Desc      :   1-node sandbox env on AWS China
 # Ctime     :   2020-05-12
-# Mtime     :   2026-04-30
-# Path      :   terraform/spec/aws-cn.yml
+# Mtime     :   2026-08-24
+# Path      :   terraform/spec/aws-cn.tf
 # Docs      :   https://pigsty.io/docs/deploy/terraform
 # License   :   Apache-2.0 @ https://pigsty.io/docs/about/license/
 # Copyright :   2018-2026  Ruohang Feng / Vonng (rh@vonng.com)
@@ -12,15 +12,17 @@
 ###########################################################
 # AWS Provider
 ###########################################################
-# https://registry.terraform.io/providers/hashicorp/aws/latest/docs
+# https://search.opentofu.org/provider/hashicorp/aws/latest
 # export AWS_REGION="cn-north-1"
 # export AWS_ACCESS_KEY_ID="xxxxxxxxxxx"
 # export AWS_SECRET_ACCESS_KEY="xxxxxxx"
 
 terraform {
+  required_version = ">= 1.0"
   required_providers {
     aws = {
-      source = "hashicorp/aws"
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
     }
   }
 }
@@ -35,7 +37,7 @@ provider "aws" {
 ###########################################################
 # AWS Networking
 ###########################################################
-# https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc
+# https://search.opentofu.org/provider/hashicorp/aws/latest/docs/resources/vpc
 
 #===============================#
 # VPC
@@ -55,7 +57,7 @@ resource "aws_vpc" "pigsty_vpc" {
 #===============================#
 # Subnet
 #===============================#
-# https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/subnet
+# https://search.opentofu.org/provider/hashicorp/aws/latest/docs/data-sources/subnet
 resource "aws_subnet" "pigsty_subnet" {
   vpc_id                  = aws_vpc.pigsty_vpc.id
   cidr_block              = "10.10.10.0/24"
@@ -72,7 +74,7 @@ resource "aws_subnet" "pigsty_subnet" {
 #===============================#
 # Internet Gateway
 #===============================#
-# https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/internet_gateway
+# https://search.opentofu.org/provider/hashicorp/aws/latest/docs/resources/internet_gateway
 resource "aws_internet_gateway" "pigsty_igw" {
   vpc_id = aws_vpc.pigsty_vpc.id
   tags = {
@@ -87,7 +89,7 @@ resource "aws_internet_gateway" "pigsty_igw" {
 #===============================#
 # Route Table
 #===============================#
-# https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route_table
+# https://search.opentofu.org/provider/hashicorp/aws/latest/docs/resources/route_table
 resource "aws_route_table" "pigsty_rt" {
   vpc_id = aws_vpc.pigsty_vpc.id
   tags = {
@@ -102,7 +104,7 @@ resource "aws_route_table" "pigsty_rt" {
 #===============================#
 # Route
 #===============================#
-# https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route
+# https://search.opentofu.org/provider/hashicorp/aws/latest/docs/resources/route
 resource "aws_route" "default_route" {
   route_table_id         = aws_route_table.pigsty_rt.id
   destination_cidr_block = "0.0.0.0/0"
@@ -112,7 +114,7 @@ resource "aws_route" "default_route" {
 #===============================#
 # Route Table Association
 #===============================#
-# https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route_table_association
+# https://search.opentofu.org/provider/hashicorp/aws/latest/docs/resources/route_table_association
 resource "aws_route_table_association" "pigsty_assoc" {
   subnet_id      = aws_subnet.pigsty_subnet.id
   route_table_id = aws_route_table.pigsty_rt.id
@@ -130,7 +132,7 @@ resource "aws_route_table_association" "pigsty_assoc" {
 #===============================#
 # ssh-keygen -t rsa -N '' -f ~/.aws/pigsty-key
 
-# https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/key_pair
+# https://search.opentofu.org/provider/hashicorp/aws/latest/docs/resources/key_pair
 resource "aws_key_pair" "pigsty_key" {
   key_name   = "pigsty-key"
   public_key = file("~/.aws/pigsty-key.pub")
@@ -139,7 +141,7 @@ resource "aws_key_pair" "pigsty_key" {
 #===============================#
 # SECURITY GROUP
 #===============================#
-# https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group
+# https://search.opentofu.org/provider/hashicorp/aws/latest/docs/resources/security_group
 resource "aws_security_group" "pigsty_sg" {
   name        = "pigsty-sg"
   description = "Pigsty Security Group"
@@ -156,7 +158,7 @@ resource "aws_security_group" "pigsty_sg" {
 #===============================#
 # SECURITY RULE
 #===============================#
-# https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule
+# https://search.opentofu.org/provider/hashicorp/aws/latest/docs/resources/security_group_rule
 resource "aws_security_group_rule" "public_out" {
   type              = "egress"
   from_port         = 0
@@ -188,7 +190,7 @@ resource "aws_security_group_rule" "public_in" {
 #===============================#
 # AWS EC2 INSTANCES (Pigsty Meta)
 #===============================#
-# https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/instance
+# https://search.opentofu.org/provider/hashicorp/aws/latest/docs/resources/instance
 resource "aws_instance" "pigsty-meta" {
   # Legacy AWS China AMI. Debian's official AWS AMI catalog does not cover China
   # regions, so do not replace this with a Debian 12/13 AMI without verifying a
@@ -220,10 +222,10 @@ resource "aws_instance" "pigsty-meta" {
 #===============================#
 # AWS Elastic IP: OUTPUT
 #===============================#
-# https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/eip
+# https://search.opentofu.org/provider/hashicorp/aws/latest/docs/resources/eip
 
 resource "aws_eip" "pigsty-ip" {
-  vpc = true
+  domain = "vpc"
   instance                  = aws_instance.pigsty-meta.id
   associate_with_private_ip = "10.10.10.10"
   depends_on                = [aws_internet_gateway.pigsty_igw]

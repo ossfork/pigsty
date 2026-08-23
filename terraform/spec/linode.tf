@@ -2,7 +2,7 @@
 # File      :   linode.tf
 # Desc      :   1-node pigsty meta for Linode/Akamai (Debian 12/13)
 # Ctime     :   2025-01-07
-# Mtime     :   2026-08-12
+# Mtime     :   2026-08-24
 # Path      :   terraform/spec/linode.tf
 # Docs      :   https://pigsty.io/docs/deploy/terraform
 # License   :   Apache-2.0 @ https://pigsty.io/docs/about/license/
@@ -53,7 +53,7 @@ locals {
 
 
 #===========================================================#
-# Terraform Provider
+# Provider Requirements
 #===========================================================#
 terraform {
   required_version = ">= 1.0"

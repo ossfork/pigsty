@@ -9,7 +9,7 @@ files/*.crt
 files/pki/*
 
 #########################################################
-# vagrant & terraform & docker
+# vagrant & OpenTofu / Terraform & docker
 #########################################################
 .vagrant/
 vagrant/Vagranfile
@@ -17,9 +17,9 @@ vagrant/.vagrant
 
 .terraform/
 terraform/.terraform/
-terraform/*.hcl
+terraform/.terraform.lock.hcl
 terraform/*.tfstate*
-terraform/.terraform*
+terraform/tfplan*
 docker/data/
 
 

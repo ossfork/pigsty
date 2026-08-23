@@ -1,9 +1,9 @@
 #==============================================================#
-# File      :   aliyun-pro.yml
+# File      :   aliyun-pro.tf
 # Desc      :   7-node building env for x86_64/aarch64
 # Ctime     :   2024-12-12
-# Mtime     :   2026-08-12
-# Path      :   terraform/spec/aliyun-pro.yml
+# Mtime     :   2026-08-24
+# Path      :   terraform/spec/aliyun-pro.tf
 # Docs      :   https://pigsty.io/docs/deploy/terraform
 # License   :   Apache-2.0 @ https://pigsty.io/docs/about/license/
 # Copyright :   2018-2026  Ruohang Feng / Vonng (rh@vonng.com)
@@ -76,7 +76,7 @@ locals {
 
 
 #===========================================================#
-# Terraform Provider
+# Provider Requirements
 #===========================================================#
 terraform {
   required_version = ">= 1.0"

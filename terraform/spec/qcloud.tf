@@ -2,13 +2,13 @@
 # File      :   qcloud.tf
 # Desc      :   1-node pigsty meta for QCloud / Tencent Cloud (Debian 12/13)
 # Ctime     :   2025-01-07
-# Mtime     :   2026-08-12
+# Mtime     :   2026-08-24
 # Path      :   terraform/spec/qcloud.tf
 # Docs      :   https://pigsty.io/docs/deploy/terraform
 # License   :   Apache-2.0 @ https://pigsty.io/docs/about/license/
 # Copyright :   2018-2026  Ruohang Feng / Vonng (rh@vonng.com)
 #==============================================================#
-# This terraform spec creates a single-node Pigsty deployment
+# This OpenTofu-first spec creates a single-node Pigsty deployment
 # on Tencent Cloud (QCloud) with the following resources:
 #   - VPC with 10.10.10.0/24 CIDR
 #   - Subnet in the specified availability zone
@@ -18,9 +18,9 @@
 # Usage:
 #   export TENCENTCLOUD_SECRET_ID="your_secret_id"
 #   export TENCENTCLOUD_SECRET_KEY="your_secret_key"
-#   terraform init
-#   terraform plan
-#   terraform apply
+#   tofu init
+#   tofu plan
+#   tofu apply
 #==============================================================#
 
 
@@ -89,9 +89,10 @@ locals {
 
 
 #===========================================================#
-# Terraform Provider: QCloud (Tencent Cloud)
+# Provider Requirements: QCloud (Tencent Cloud)
 #===========================================================#
 terraform {
+  required_version = ">= 1.0"
   required_providers {
     tencentcloud = {
       source  = "tencentcloudstack/tencentcloud"

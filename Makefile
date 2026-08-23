@@ -2,7 +2,7 @@
 # File      :   Makefile
 # Desc      :   pigsty shortcuts
 # Ctime     :   2019-04-13
-# Mtime     :   2026-03-05
+# Mtime     :   2026-08-24
 # Path      :   Makefile
 # License   :   Apache-2.0 @ https://pigsty.io/docs/about/license/
 # Copyright :   2018-2026  Ruohang Feng / Vonng (rh@vonng.com)
@@ -261,8 +261,7 @@ dns:
 start: up ssh      # 1-node version
 ssh:               # add current vagrant ssh config to your ~/.ssh/pigsty_config
 	vagrant/ssh
-tssh:               # add current terraform ssh config to your ~/.ssh/pigsty_config
-	terraform/ssh
+tssh: iac-ssh        # compatibility alias for the IaC SSH config target
 
 #------------------------------#
 # vagrant vm management
@@ -527,17 +526,32 @@ upload-dba:
 ###############################################################
 
 #------------------------------#
-#          Terraform           #
+#     OpenTofu / Terraform     #
 #------------------------------#
-tu: # terraform up
-	cd terraform && make u
-	cd terraform && make ssh
-td: # terraform destroy
-	cd terraform && make d
-ts: # terraform ssh
-	cd terraform && make ssh
-to: # terraform output
-	cd terraform && make out
+IAC_CLI ?= tofu
+
+iac-init:
+	$(MAKE) -C terraform IAC_CLI="$(IAC_CLI)" init
+iac-validate:
+	$(MAKE) -C terraform IAC_CLI="$(IAC_CLI)" validate
+iac-plan:
+	$(MAKE) -C terraform IAC_CLI="$(IAC_CLI)" plan
+iac-up:
+	$(MAKE) -C terraform IAC_CLI="$(IAC_CLI)" up
+iac-apply:
+	$(MAKE) -C terraform IAC_CLI="$(IAC_CLI)" apply
+iac-destroy:
+	$(MAKE) -C terraform IAC_CLI="$(IAC_CLI)" destroy
+iac-ssh:
+	$(MAKE) -C terraform IAC_CLI="$(IAC_CLI)" ssh
+iac-output:
+	$(MAKE) -C terraform IAC_CLI="$(IAC_CLI)" out
+
+# Legacy target aliases. OpenTofu remains the default via IAC_CLI.
+tu: iac-up
+td: iac-destroy
+ts: iac-ssh
+to: iac-output
 
 #------------------------------#
 #     Change Configuration     #
@@ -717,7 +731,7 @@ rs:
         cso copy-src-oss copy-src-pro csr copy-src-rpm csd copy-src-deb \
         push pull ss gsync gpull grestore gpush \
         r release u upload-src \
-        tu td ts to \
+        iac-init iac-validate iac-plan iac-up iac-apply iac-destroy iac-ssh iac-output tu td ts to \
         cmeta cdual ctrio cfull csimu coss cpro \
         oss pro all vo vp vr vd va boot-pkg \
         meta meta8 meta9 meta10 meta12 meta13 meta22 meta24 meta26 \

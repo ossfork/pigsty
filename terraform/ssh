@@ -1,21 +1,28 @@
 #!/bin/bash
 #==============================================================#
 # File      :   ssh
-# Desc      :   write terraform ssh config to ~/.ssh/pigsty_config
+# Desc      :   write IaC output ssh config to ~/.ssh/pigsty_config
 # Ctime     :   2024-11-23
-# Mtime     :   2024-08-22
+# Mtime     :   2026-08-24
 # Path      :   terraform/ssh
 # Docs      :   https://pigsty.io/docs/deploy/terraform
 # License   :   Apache-2.0 @ https://pigsty.io/docs/about/license/
 # Copyright :   2018-2026  Ruohang Feng / Vonng (rh@vonng.com)
 #==============================================================#
-PROG_NAME="$(basename $0)"
-PROG_DIR="$(cd $(dirname $0) && pwd)"
+set -euo pipefail
+
+PROG_NAME="$(basename "$0")"
+PROG_DIR="$(cd "$(dirname "$0")" && pwd)"
+IAC_CLI="${IAC_CLI:-tofu}"
 PASSWORD='PigstyDemo4'
 
-# Write Terraform SSH config to ~/.ssh/pigsty_config
+# OpenTofu is the default; set IAC_CLI=terraform for compatibility.
+command -v "$IAC_CLI" >/dev/null || { echo "$PROG_NAME: $IAC_CLI is not installed" >&2; exit 1; }
+command -v jq >/dev/null || { echo "$PROG_NAME: jq is not installed" >&2; exit 1; }
+
+# Write IaC output SSH config to ~/.ssh/pigsty_config
 cd "$PROG_DIR"
-outputs=$(terraform output -json)
+outputs=$("$IAC_CLI" output -json)
 
 SSH_CONFIG_FILE="$HOME/.ssh/pigsty_config"
 > "$SSH_CONFIG_FILE"

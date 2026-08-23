@@ -218,7 +218,7 @@ Production deployment guide for multi-node, highly available clusters. Use these
 - `install.md` - Step-by-step production installation with HA PostgreSQL clusters
 - `sandbox.md` - Setting up sandbox environments for testing and development
 - `vagrant.md` - Vagrant templates for local multi-node testing clusters
-- `terraform.md` - Terraform templates for cloud infrastructure provisioning (AWS, GCP, Azure)
+- `terraform.md` - OpenTofu-first, Terraform-compatible templates for cloud infrastructure provisioning (AWS, GCP, Azure)
 - `admin.md` - Admin node setup and configuration management best practices
 - `security.md` - Production security hardening including SSL/TLS, firewall rules, and access controls
 

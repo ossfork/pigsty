@@ -1,10 +1,10 @@
-# Terraform Templates
+# OpenTofu Cloud Templates
 
-[Terraform](https://developer.hashicorp.com/terraform) templates for provisioning cloud VMs to run Pigsty.
+[OpenTofu](https://opentofu.org/) templates for provisioning cloud VMs to run Pigsty. OpenTofu is the default CLI; the shared `.tf` configurations remain compatible with Terraform 1.x.
 
 Docs: https://pigsty.io/docs/deploy/terraform
 
-All templates create a single-node `pg-meta` instance with:
+Most templates create a single-node `pg-meta` instance; the multi-node Aliyun templates are listed separately below. Common defaults include:
 - **OS**: Debian 12 (most providers) or Ubuntu 26.04 (Aliyun templates)
 - **Arch**: amd64 (default) or arm64 (where supported)
 - **Network**: VPC with `10.10.10.0/24` subnet, private IP `10.10.10.10`
@@ -37,17 +37,17 @@ There are lots of cloud providers out there. Choose one that fits your needs.
 
 ## Quick Start
 
-### 1. Install Terraform
+### 1. Install OpenTofu
 
 ```bash
 # macOS
-brew install terraform
+brew install opentofu
 
-# Linux (Debian/Ubuntu)
-wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
-echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
-sudo apt update && sudo apt install terraform
+# Verify the installed CLI
+tofu version
 ```
+
+For Debian, Ubuntu, RHEL, and other platforms, follow the [official OpenTofu installation guide](https://opentofu.org/docs/intro/install/). The package name is `tofu`; the command is also `tofu`.
 
 ### 2. Choose and Configure Template
 
@@ -76,17 +76,17 @@ export HCLOUD_TOKEN="your-api-token"
 ### 4. Deploy
 
 ```bash
-terraform init      # Download provider plugins (first time only)
-terraform plan      # Preview changes
-terraform apply     # Create resources (type 'yes' to confirm)
+tofu init      # Download provider plugins (first time only)
+tofu plan      # Preview changes
+tofu apply     # Create resources (type 'yes' to confirm)
 ```
 
 ### 5. Get Server IP
 
 ```bash
-terraform output meta_ip
+tofu output meta_ip
 # Or
-terraform output ssh_command
+tofu output ssh_command
 ```
 
 ### 6. Install Pigsty
@@ -106,8 +106,34 @@ cd ~/pigsty
 ### 7. Cleanup
 
 ```bash
-terraform destroy   # Remove all resources (type 'yes' to confirm)
+tofu destroy   # Remove all resources (type 'yes' to confirm)
 ```
+
+
+
+## CLI Shortcuts and Terraform Compatibility
+
+The Makefile uses OpenTofu by default and keeps Terraform as an explicit compatibility option:
+
+```bash
+cd ~/pigsty/terraform
+
+make init
+make validate
+make plan
+make apply          # Interactive confirmation
+make destroy        # Interactive confirmation
+make out
+
+# Use Terraform explicitly in the same commands
+make IAC_CLI=terraform plan
+```
+
+The historical `make u` and `make d` aliases are interactive. Automatic confirmation is available only through the deliberately named `make up-auto`, `make apply-auto`, and `make destroy-auto` targets.
+
+OpenTofu intentionally retains compatibility names such as `.tf`, `terraform {}`, `terraform.tfvars`, `.terraform/`, `.terraform.lock.hcl`, and `terraform.tfstate`. Do not rename these as part of the migration.
+
+Use one CLI per working directory. OpenTofu and Terraform resolve unqualified provider addresses through different registries and may rewrite `.terraform.lock.hcl` during `init`. If you switch engines, back up state and rerun that engine's `init` before planning.
 
 
 
@@ -154,7 +180,7 @@ These providers generally do not expose stable point-release image IDs such as `
 
 Override via command line:
 ```bash
-terraform apply -var="distro=d13" -var="architecture=arm64"
+tofu apply -var="distro=d13" -var="architecture=arm64"
 ```
 
 Or create a `terraform.tfvars` file:
@@ -213,7 +239,7 @@ gcloud auth application-default login
 export GOOGLE_APPLICATION_CREDENTIALS="/path/to/service-account-key.json"
 
 # Note: GCP requires project ID - set in terraform.tf or:
-terraform apply -var="project=your-project-id"
+tofu apply -var="project=your-project-id"
 ```
 
 ### Tencent Cloud
@@ -283,36 +309,50 @@ All security groups/firewalls are configured to allow all traffic from anywhere 
 
 ## Troubleshooting
 
+### Migrating Existing Terraform State
+
+OpenTofu can read Terraform 1.x state directly. Preserve the state and configuration before initializing OpenTofu:
+
+```bash
+cp -p terraform.tfstate "terraform.tfstate.pre-tofu.$(date +%Y%m%d%H%M%S)"
+tofu init
+tofu plan
+```
+
+Continue only when the OpenTofu plan matches the Terraform plan you expected. Do not run both CLIs concurrently against the same state, and never delete `terraform.tfstate` while reinitializing providers.
+
 ### SSH Connection Issues
 
 ```bash
 # Check if server is reachable
-ping $(terraform output -raw meta_ip)
+ping $(tofu output -raw meta_ip)
 
 # Check SSH with verbose output
-ssh -v root@$(terraform output -raw meta_ip)
+ssh -v root@$(tofu output -raw meta_ip)
 
 # Verify SSH key
 ssh-add -l
 ```
 
-### Terraform State Issues
+### OpenTofu State Issues
 
 ```bash
-# Refresh state
-terraform refresh
+# Review detected state-only changes before accepting them
+tofu plan -refresh-only
+tofu apply -refresh-only
 
-# Force recreate
-terraform taint <resource_name>
-terraform apply
+# Review and force replacement of a degraded resource
+tofu plan -replace=<resource_name>
+tofu apply -replace=<resource_name>
 ```
 
 ### Provider Plugin Issues
 
 ```bash
-# Clear and reinitialize
-rm -rf .terraform .terraform.lock.hcl
-terraform init
+# Keep recoverable copies and reinitialize
+test ! -d .terraform || mv .terraform ".terraform.pre-tofu.$(date +%s)"
+test ! -f .terraform.lock.hcl || mv .terraform.lock.hcl ".terraform.lock.hcl.pre-tofu.$(date +%s)"
+tofu init
 ```
 
 

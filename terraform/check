@@ -1,0 +1,48 @@
+#!/bin/bash
+#==============================================================#
+# File      :   check
+# Desc      :   validate every cloud template with an IaC CLI
+# Ctime     :   2026-08-24
+# Mtime     :   2026-08-24
+# Path      :   terraform/check
+# License   :   Apache-2.0 @ https://pigsty.io/docs/about/license/
+# Copyright :   2018-2026  Ruohang Feng / Vonng (rh@vonng.com)
+#==============================================================#
+set -Eeuo pipefail
+
+PROG_NAME="$(basename "$0")"
+PROG_DIR="$(cd "$(dirname "$0")" && pwd)"
+IAC_CLI="${IAC_CLI:-tofu}"
+CHECK_MODE="${1:-validate}"
+
+case "$CHECK_MODE" in
+  validate) ;;
+  *) echo "usage: $PROG_NAME [validate]" >&2; exit 2 ;;
+esac
+
+command -v "$IAC_CLI" >/dev/null || { echo "$PROG_NAME: $IAC_CLI is not installed" >&2; exit 1; }
+
+templates=("$PROG_DIR/terraform.tf" "$PROG_DIR"/spec/*.tf)
+
+command -v ssh-keygen >/dev/null || { echo "$PROG_NAME: ssh-keygen is not installed" >&2; exit 1; }
+check_dir=$(mktemp -d "${TMPDIR:-/tmp}/pigsty-iac-check.XXXXXX")
+trap 'rm -rf -- "$check_dir"' EXIT
+shared_data_dir="$check_dir/.terraform"
+shared_lock_file="$check_dir/provider.lock.hcl"
+fixture_home="$check_dir/home"
+mkdir -p "$shared_data_dir" "$fixture_home/.ssh" "$fixture_home/.aws"
+ssh-keygen -q -t ed25519 -N '' -f "$fixture_home/.ssh/id_rsa"
+cp "$fixture_home/.ssh/id_rsa.pub" "$fixture_home/.aws/pigsty-key.pub"
+
+for template in "${templates[@]}"; do
+  template_name="$(basename "$template" .tf)"
+  case_dir="$check_dir/$template_name"
+  mkdir -p "$case_dir"
+  cp "$template" "$case_dir/main.tf"
+  [[ -f "$shared_lock_file" ]] && cp "$shared_lock_file" "$case_dir/.terraform.lock.hcl"
+
+  echo "[$IAC_CLI] validating ${template#"$PROG_DIR/"}"
+  HOME="$fixture_home" TF_DATA_DIR="$shared_data_dir" "$IAC_CLI" -chdir="$case_dir" init -upgrade -backend=false -input=false -no-color >/dev/null
+  HOME="$fixture_home" TF_DATA_DIR="$shared_data_dir" "$IAC_CLI" -chdir="$case_dir" validate -no-color
+  cp "$case_dir/.terraform.lock.hcl" "$shared_lock_file"
+done
