@@ -50,7 +50,7 @@
 #   1. Detect node identity (OS, version, architecture)
 #   2. Copy the local Pigsty source release artifact when present
 #   3. Clean dirty packages and recreate repo metadata
-#   4. Create compressed tarball at /tmp/pkg.tgz
+#   4. Create compressed tarball at cache_tmp_dir/pkg.tgz
 #   5. Fetch tarball back to control node
 #--------------------------------------------------------------#
 - name: MAKE OFFLINE PACKAGE
@@ -123,7 +123,7 @@
 #   cache_check  : verify repo directories exist and not empty
 #   cache_src    : copy pre-staged Pigsty source release artifact when present
 #   cache_create : clean dirty packages, recreate repo metadata
-#   cache_tgz    : create /tmp/pkg.tgz tarball on target
+#   cache_tgz    : create cache_tmp_dir/pkg.tgz tarball on target
 #   cache_fetch  : fetch tarball from target to control node
 #   cache_info   : calculate md5sum and display file sizes
 #
@@ -133,8 +133,8 @@
 #
 #   1. Ensure Pigsty is installed:  ./deploy.yml
 #   2. Create offline package:      ./cache.yml -l infra
-#   3. Transfer to air-gapped env:  scp dist/v4.5.0/*.tgz target:/tmp/
-#   4. Bootstrap with package:      ./bootstrap -p /tmp/pigsty-pkg-*.tgz
+#   3. Transfer to air-gapped env:  scp dist/v4.5.0/pigsty-pkg-v4.5.0.el9.x86_64.tgz target:/var/tmp/pkg.tgz
+#   4. Bootstrap with package:      ./bootstrap
 #   5. Configure and install:       ./configure && ./deploy.yml
 #
 #==============================================================#

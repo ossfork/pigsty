@@ -76,15 +76,17 @@
 # 4. Create Cache Tarball                            [cache_tgz]
 #--------------------------------------------------------------#
 # Create compressed tarball of all repo directories
-# Tarball is created at /tmp/pkg.tgz on the target node
+# Tarball is created at {{ cache_tmp_dir }}/pkg.tgz on the target node
 # Uses maximum gzip compression (-9) for smallest size
 #--------------------------------------------------------------#
 - name: create cache tarball
   tags: cache_tgz
   become: true
   shell: |
-    tar cvf - -C "{{ repo_home }}" {% for item in cache_repo_list %}{{ item }} {% endfor %} | gzip -9 > /tmp/pkg.tgz
-    chmod a+r /tmp/pkg.tgz;
+    set -euo pipefail
+    tar cvf - -C "{{ repo_home }}" {% for item in cache_repo_list %}{{ item }} {% endfor %} | gzip -9 > "{{ cache_tmp_dir }}/pkg.tgz"
+    gzip -t "{{ cache_tmp_dir }}/pkg.tgz"
+    chmod a+r "{{ cache_tmp_dir }}/pkg.tgz"
   args:
     executable: /bin/bash
 
@@ -102,7 +104,7 @@
   tags: cache_fetch
   become: false
   synchronize:
-    src: /tmp/pkg.tgz
+    src: "{{ cache_tmp_dir }}/pkg.tgz"
     dest: "{{ cache_dirname }}/{{ cache_filename }}"
     mode: pull
     compress: no

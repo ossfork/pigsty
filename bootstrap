@@ -24,12 +24,12 @@ PIGSTY_VERSION=v4.5.0
 #--------------------------------------------------------------#
 # args
 #  -r  --region <region> : mirror region to use (default|china|europe)
-#  -p  --path   <path>   : offline packages path, /tmp/pkg.tgz by default
+#  -p  --path   <path>   : offline packages path, /var/tmp/pkg.tgz by default
 #  -k  --keep            : keep upstream repo during bootstrap?
 #--------------------------------------------------------------#
 REGION=""               # which mirror to use? (default|china)
 REMOVE_REPO="yes"       # keep existing upstream repo file?
-PKG_PATH=/tmp/pkg.tgz   # which pkg to be used ? (/tmp/pkg.tgz by default)
+PKG_PATH=/var/tmp/pkg.tgz   # which pkg to be used ? (/var/tmp/pkg.tgz by default)
 
 
 #--------------------------------------------------------------#
@@ -37,7 +37,7 @@ PKG_PATH=/tmp/pkg.tgz   # which pkg to be used ? (/tmp/pkg.tgz by default)
 #--------------------------------------------------------------#
 # This script make sure two things:
 #    1. ansible is installed
-#    2. local repo is prepared, if /tmp/pkg.tgz exists
+#    2. local repo is prepared, if /var/tmp/pkg.tgz exists
 # It perform following tasks:
 # 1. check preconditions
 #
@@ -316,7 +316,7 @@ function check_repo(){
     if [[ ${KERNEL} == "Darwin" ]]; then
         return 0
     fi
-    local pkg_path=${1-${PKG_PATH}}         # default download path : /tmp/pkg.tgz
+    local pkg_path=${1-${PKG_PATH}}         # default download path : /var/tmp/pkg.tgz
     local repo_dir=${2-${REPO_DIR}}         # default repo directory: /www/pigsty
     local nginx_home=$(dirname ${repo_dir})
     local repo_name=$(basename ${repo_dir})
@@ -339,30 +339,41 @@ function check_repo(){
         return 0
     fi
 
-    # otherwise, if there's no /tmp/pkg.tgz, we can do nothing with repo, skip
+    # retain compatibility with packages placed at the old default path
+    if [[ ${pkg_path} == "/var/tmp/pkg.tgz" && ! -f ${pkg_path} && -f /tmp/pkg.tgz ]]; then
+        log_warn "cache = use legacy /tmp/pkg.tgz"
+        pkg_path=/tmp/pkg.tgz
+    fi
+
+    # otherwise, if there's no offline package, we can do nothing with repo, skip
     if [[ ! -f ${pkg_path} ]]; then
         return 0
-    else # if the /tmp/pkg.tgz exists, but looks suspicious, remove it
-        if (($(stat -c%s ${pkg_path})>409600000)); then
+    else # if the package exists, but looks suspicious, remove it
+        if (($(stat -c%s "${pkg_path}")>409600000)); then
             log_info "cache = ${pkg_path} exists"
         else
             log_warn "cache = ${pkg_path} exists but invalid"
-            rm -rf ${pkg_path}
+            rm -rf "${pkg_path}"
             return 0
         fi
     fi
 
-    # extract /tmp/pkg.tgz to /www/pigsty
+    if ! [ -x "$(command -v tar)" ]; then
+        log_error 'tar is not installed'
+        return 1
+    fi
+    if ! tar -tzf "${pkg_path}" > /dev/null; then
+        log_error "cache = ${pkg_path} is not a valid tarball"
+        return 1
+    fi
+
+    # extract offline package to /www/pigsty
     if [[ -d ${repo_dir} ]]; then
         log_warn "repo = invalid, remove"
         sudo rm -rf ${repo_dir}
     fi
     log_info "repo = extract from ${pkg_path}"
-    if ! [ -x "$(command -v tar)" ]; then
-      log_error 'tar is not installed'
-      return 1
-    fi
-    sudo tar -xf ${pkg_path} -C ${nginx_home}  # extract
+    sudo tar -xf "${pkg_path}" -C "${nginx_home}"  # extract
 }
 
 
@@ -783,7 +794,7 @@ function main(){
     check_vendor_version  # release       = rocky / debian / ubuntu version = 8,9,12,22,24
     check_sudo            # current_user  = NOPASSWD sudo
     check_ssh             # current_user  = NOPASSWD ssh
-    check_repo            # create repo from pkg.tgz if exists
+    check_repo || exit $? # create repo from pkg.tgz if exists
     check_repo_file       # create local file repo file if repo exists
     check_utils           # check ansible sshpass and other utils installed
     log_info "boostrap pigsty complete"

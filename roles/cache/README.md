@@ -99,6 +99,7 @@ cache                          # Full role execution
 |------------------|-------------------------------------------|----------------------------------------|
 | `cache_pkg_name` | `pigsty-pkg-${version}.${os}.${arch}.tgz` | Output filename pattern                |
 | `cache_pkg_dir`  | `dist/${version}`                         | Output directory on control node       |
+| `cache_tmp_dir`  | `/var/tmp`                                | Working directory on target node       |
 | `cache_repo`     | `pigsty`                                  | Repo names to cache (CSV for multiple) |
 
 ### Referenced Variables
@@ -228,8 +229,8 @@ ls -la /www/pigsty/
 # Use offline package during bootstrap
 ./bootstrap -p /path/to/pigsty-pkg-v4.5.0.el9.x86_64.tgz
 
-# or if your already put it to /tmp/pkg.tgz
-./bootstrap   # /tmp/pkg.tgz is used by default
+# or if you already put it at /var/tmp/pkg.tgz
+./bootstrap   # /var/tmp/pkg.tgz is used by default
 
 # Bootstrap will:
 # 1. Extract tarball to /www/pigsty

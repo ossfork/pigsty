@@ -4,6 +4,7 @@
 #-----------------------------------------------------------------
 cache_pkg_name: 'pigsty-pkg-${version}.${os}.${arch}.tgz' # cache offline package filename pattern
 cache_pkg_dir: 'dist/${version}'  # where to store the cached package? dist/${version} by default
+cache_tmp_dir: /var/tmp           # remote working directory for the cache tarball
 cache_repo: pigsty                # target repo(s) to be cached, use `,` to separate multiple repos
 
 #-----------------------------------------------------------------

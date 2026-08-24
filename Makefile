@@ -391,23 +391,23 @@ copy-src:
 
 # copy offline packages (set OS=el8/el9/el10/d12/d13/u22/u24/u26)
 copy-pkg:
-	scp dist/${VERSION}/$(PKG)pigsty-pkg-${VERSION}.${OS}.${ARCH}.tgz $(META):/tmp/pkg.tgz
+	scp dist/${VERSION}/$(PKG)pigsty-pkg-${VERSION}.${OS}.${ARCH}.tgz $(META):/var/tmp/pkg.tgz
 copy-el8:
-	scp dist/${VERSION}/$(PKG)${EL8_PKG} $(META):/tmp/pkg.tgz
+	scp dist/${VERSION}/$(PKG)${EL8_PKG} $(META):/var/tmp/pkg.tgz
 copy-el9:
-	scp dist/${VERSION}/$(PKG)${EL9_PKG} $(META):/tmp/pkg.tgz
+	scp dist/${VERSION}/$(PKG)${EL9_PKG} $(META):/var/tmp/pkg.tgz
 copy-el10:
-	scp dist/${VERSION}/$(PKG)${EL10_PKG} $(META):/tmp/pkg.tgz
+	scp dist/${VERSION}/$(PKG)${EL10_PKG} $(META):/var/tmp/pkg.tgz
 copy-d12:
-	scp dist/${VERSION}/$(PKG)${D12_PKG} $(META):/tmp/pkg.tgz
+	scp dist/${VERSION}/$(PKG)${D12_PKG} $(META):/var/tmp/pkg.tgz
 copy-d13:
-	scp dist/${VERSION}/$(PKG)${D13_PKG} $(META):/tmp/pkg.tgz
+	scp dist/${VERSION}/$(PKG)${D13_PKG} $(META):/var/tmp/pkg.tgz
 copy-u22:
-	scp dist/${VERSION}/$(PKG)${U22_PKG} $(META):/tmp/pkg.tgz
+	scp dist/${VERSION}/$(PKG)${U22_PKG} $(META):/var/tmp/pkg.tgz
 copy-u24:
-	scp dist/${VERSION}/$(PKG)${U24_PKG} $(META):/tmp/pkg.tgz
+	scp dist/${VERSION}/$(PKG)${U24_PKG} $(META):/var/tmp/pkg.tgz
 copy-u26:
-	scp dist/${VERSION}/$(PKG)${U26_PKG} $(META):/tmp/pkg.tgz
+	scp dist/${VERSION}/$(PKG)${U26_PKG} $(META):/var/tmp/pkg.tgz
 copy-app:
 	scp dist/${VERSION}/${APP_PKG} $(META):~/app.tgz
 	ssh -t $(META) 'rm -rf ~/app; tar -xf app.tgz; rm -rf app.tgz'
@@ -417,7 +417,7 @@ copy-all: copy-src copy-pkg
 use-src:
 	ssh -t $(META) 'rm -rf ~/pigsty; tar -xf pigsty.tgz; rm -rf pigsty.tgz'
 use-pkg:
-	ssh $(META) "sudo mkdir -p /www; sudo tar -xf /tmp/pkg.tgz -C /www"
+	ssh $(META) "sudo mkdir -p /www; sudo tar -xf /var/tmp/pkg.tgz -C /www"
 use-all: use-src use-pkg
 
 # load config into cmdb
@@ -688,21 +688,21 @@ vsimu26:
 vs: simu
 simu: simu9
 simu8: csimu del vsimu8 new ssh
-	scp dist/${VERSION}/$(PKG)pigsty-pkg-${VERSION}.el8.${ARCH}.tgz 10.10.10.10:/tmp/pkg.tgz ; ssh 10.10.10.10 'sudo mkdir -p /www; sudo tar -xf /tmp/pkg.tgz -C /www'
+	scp dist/${VERSION}/$(PKG)pigsty-pkg-${VERSION}.el8.${ARCH}.tgz 10.10.10.10:/var/tmp/pkg.tgz ; ssh 10.10.10.10 'sudo mkdir -p /www; sudo tar -xf /var/tmp/pkg.tgz -C /www'
 simu9: csimu del vsimu9 new ssh
-	scp dist/${VERSION}/$(PKG)pigsty-pkg-${VERSION}.el9.${ARCH}.tgz 10.10.10.10:/tmp/pkg.tgz ; ssh 10.10.10.10 'sudo mkdir -p /www; sudo tar -xf /tmp/pkg.tgz -C /www'
+	scp dist/${VERSION}/$(PKG)pigsty-pkg-${VERSION}.el9.${ARCH}.tgz 10.10.10.10:/var/tmp/pkg.tgz ; ssh 10.10.10.10 'sudo mkdir -p /www; sudo tar -xf /var/tmp/pkg.tgz -C /www'
 simu10: csimu del vsimu10 new ssh
-	scp dist/${VERSION}/$(PKG)pigsty-pkg-${VERSION}.el10.${ARCH}.tgz 10.10.10.10:/tmp/pkg.tgz ; ssh 10.10.10.10 'sudo mkdir -p /www; sudo tar -xf /tmp/pkg.tgz -C /www'
+	scp dist/${VERSION}/$(PKG)pigsty-pkg-${VERSION}.el10.${ARCH}.tgz 10.10.10.10:/var/tmp/pkg.tgz ; ssh 10.10.10.10 'sudo mkdir -p /www; sudo tar -xf /var/tmp/pkg.tgz -C /www'
 simu12: csimu del vsimu12 new ssh
-	scp dist/${VERSION}/$(PKG)pigsty-pkg-${VERSION}.d12.${ARCH}.tgz 10.10.10.10:/tmp/pkg.tgz ; ssh 10.10.10.10 'sudo mkdir -p /www; sudo tar -xf /tmp/pkg.tgz -C /www'
+	scp dist/${VERSION}/$(PKG)pigsty-pkg-${VERSION}.d12.${ARCH}.tgz 10.10.10.10:/var/tmp/pkg.tgz ; ssh 10.10.10.10 'sudo mkdir -p /www; sudo tar -xf /var/tmp/pkg.tgz -C /www'
 simu13: csimu del vsimu13 new ssh
-	scp dist/${VERSION}/$(PKG)pigsty-pkg-${VERSION}.d13.${ARCH}.tgz 10.10.10.10:/tmp/pkg.tgz ; ssh 10.10.10.10 'sudo mkdir -p /www; sudo tar -xf /tmp/pkg.tgz -C /www'
+	scp dist/${VERSION}/$(PKG)pigsty-pkg-${VERSION}.d13.${ARCH}.tgz 10.10.10.10:/var/tmp/pkg.tgz ; ssh 10.10.10.10 'sudo mkdir -p /www; sudo tar -xf /var/tmp/pkg.tgz -C /www'
 simu22: csimu del vsimu22 new ssh
-	scp dist/${VERSION}/$(PKG)pigsty-pkg-${VERSION}.u22.${ARCH}.tgz 10.10.10.10:/tmp/pkg.tgz ; ssh 10.10.10.10 'sudo mkdir -p /www; sudo tar -xf /tmp/pkg.tgz -C /www'
+	scp dist/${VERSION}/$(PKG)pigsty-pkg-${VERSION}.u22.${ARCH}.tgz 10.10.10.10:/var/tmp/pkg.tgz ; ssh 10.10.10.10 'sudo mkdir -p /www; sudo tar -xf /var/tmp/pkg.tgz -C /www'
 simu24: csimu del vsimu24 new ssh
-	scp dist/${VERSION}/$(PKG)pigsty-pkg-${VERSION}.u24.${ARCH}.tgz 10.10.10.10:/tmp/pkg.tgz ; ssh 10.10.10.10 'sudo mkdir -p /www; sudo tar -xf /tmp/pkg.tgz -C /www'
+	scp dist/${VERSION}/$(PKG)pigsty-pkg-${VERSION}.u24.${ARCH}.tgz 10.10.10.10:/var/tmp/pkg.tgz ; ssh 10.10.10.10 'sudo mkdir -p /www; sudo tar -xf /var/tmp/pkg.tgz -C /www'
 simu26: csimu del vsimu26 new ssh
-	scp dist/${VERSION}/$(PKG)pigsty-pkg-${VERSION}.u26.${ARCH}.tgz 10.10.10.10:/tmp/pkg.tgz ; ssh 10.10.10.10 'sudo mkdir -p /www; sudo tar -xf /tmp/pkg.tgz -C /www'
+	scp dist/${VERSION}/$(PKG)pigsty-pkg-${VERSION}.u26.${ARCH}.tgz 10.10.10.10:/var/tmp/pkg.tgz ; ssh 10.10.10.10 'sudo mkdir -p /www; sudo tar -xf /var/tmp/pkg.tgz -C /www'
 rs:
 	rsync -avz --exclude=vagrant ./ ai:~/pigsty/
 ###############################################################
