@@ -32,55 +32,74 @@ function log_debug() { printf "[${__CB}HINT${__CN}] ${__CB}$*${__CN}\n";   }
 function log_input() { printf "[${__CM} IN ${__CN}] ${__CM}$*\n=> ${__CN}"; }
 function log_hint()  { printf "${__CB}$*${__CN}\n"; }
 
-#log_info "copy source packages to building VMs"
-#scp "dist/${VERSION}/pigsty-${VERSION}.tgz" el9:~/pigsty.tgz  &
-#scp "dist/${VERSION}/pigsty-${VERSION}.tgz" el10:~/pigsty.tgz &
-#scp "dist/${VERSION}/pigsty-${VERSION}.tgz" d12:~/pigsty.tgz  &
-#scp "dist/${VERSION}/pigsty-${VERSION}.tgz" d13:~/pigsty.tgz  &
-#scp "dist/${VERSION}/pigsty-${VERSION}.tgz" u22:~/pigsty.tgz  &
-#scp "dist/${VERSION}/pigsty-${VERSION}.tgz" u24:~/pigsty.tgz  &
-#scp "dist/${VERSION}/pigsty-${VERSION}.tgz" u26:~/pigsty.tgz  &
-#wait
-#
-#log_info "copy offline packages to building VMs (${ARCH})"
-#scp "dist/${VERSION}/pigsty-pkg-${VERSION}.el9.${ARCH}.tgz"  el9:/tmp/pkg.tgz  &
-#scp "dist/${VERSION}/pigsty-pkg-${VERSION}.el10.${ARCH}.tgz" el10:/tmp/pkg.tgz &
-#scp "dist/${VERSION}/pigsty-pkg-${VERSION}.d12.${ARCH}.tgz"  d12:/tmp/pkg.tgz  &
-#scp "dist/${VERSION}/pigsty-pkg-${VERSION}.d13.${ARCH}.tgz"  d13:/tmp/pkg.tgz  &
-#scp "dist/${VERSION}/pigsty-pkg-${VERSION}.u22.${ARCH}.tgz"  u22:/tmp/pkg.tgz  &
-#scp "dist/${VERSION}/pigsty-pkg-${VERSION}.u24.${ARCH}.tgz"  u24:/tmp/pkg.tgz  &
-#scp "dist/${VERSION}/pigsty-pkg-${VERSION}.u26.${ARCH}.tgz"  u26:/tmp/pkg.tgz  &
-#wait
+BUILD_HOSTS=(el9 el10 d12 d13 u22 u24 u26)
+BUILD_IPS=(10.10.10.9 10.10.10.10 10.10.10.12 10.10.10.13 10.10.10.22 10.10.10.24 10.10.10.26)
+JOB_PIDS=()
+JOB_HOSTS=()
 
-log_info "extract /tmp/pkg.tgz tarball"
-ssh -t el9  "sudo mkdir -p /www; sudo rm -rf /www/pigsty; sudo tar -xf /tmp/pkg.tgz -C /www;" &
-ssh -t el10 "sudo mkdir -p /www; sudo rm -rf /www/pigsty; sudo tar -xf /tmp/pkg.tgz -C /www;" &
-ssh -t d12  "sudo mkdir -p /www; sudo rm -rf /www/pigsty; sudo tar -xf /tmp/pkg.tgz -C /www;" &
-ssh -t d13  "sudo mkdir -p /www; sudo rm -rf /www/pigsty; sudo tar -xf /tmp/pkg.tgz -C /www;" &
-ssh -t u22  "sudo mkdir -p /www; sudo rm -rf /www/pigsty; sudo tar -xf /tmp/pkg.tgz -C /www;" &
-ssh -t u24  "sudo mkdir -p /www; sudo rm -rf /www/pigsty; sudo tar -xf /tmp/pkg.tgz -C /www;" &
-ssh -t u26  "sudo mkdir -p /www; sudo rm -rf /www/pigsty; sudo tar -xf /tmp/pkg.tgz -C /www;" &
-wait
+function start_ssh() {
+    local host="$1"
+    shift
+    ssh -nT -oBatchMode=yes "${host}" "$@" &
+    JOB_PIDS+=("$!")
+    JOB_HOSTS+=("${host}")
+}
+
+function start_scp() {
+    local host="$1"
+    local source="$2"
+    local target="$3"
+    scp -B "${source}" "${host}:${target}" &
+    JOB_PIDS+=("$!")
+    JOB_HOSTS+=("${host}")
+}
+
+function wait_jobs() {
+    local stage="$1"
+    local i status failed=0
+    for i in "${!JOB_PIDS[@]}"; do
+        if wait "${JOB_PIDS[$i]}"; then
+            log_debug "${stage}: ${JOB_HOSTS[$i]} complete"
+        else
+            status=$?
+            log_error "${stage}: ${JOB_HOSTS[$i]} failed (exit ${status})"
+            failed=1
+        fi
+    done
+    JOB_PIDS=()
+    JOB_HOSTS=()
+    return "${failed}"
+}
+
+log_info "copy source packages to building VMs"
+for host in "${BUILD_HOSTS[@]}"; do
+    start_scp "${host}" "dist/${VERSION}/pigsty-${VERSION}.tgz" "~/pigsty.tgz"
+done
+wait_jobs "copy source packages"
+
+log_info "copy offline packages to building VMs (${ARCH})"
+for i in "${!BUILD_HOSTS[@]}"; do
+    start_scp "${BUILD_HOSTS[$i]}" "dist/${VERSION}/pigsty-pkg-${VERSION}.${BUILD_HOSTS[$i]}.${ARCH}.tgz" /var/tmp/pkg.tgz
+done
+wait_jobs "copy offline packages"
+
+log_info "extract /var/tmp/pkg.tgz tarball"
+for host in "${BUILD_HOSTS[@]}"; do
+    start_ssh "${host}" 'sudo mkdir -p /www && sudo rm -rf /www/pigsty && sudo tar -xf /var/tmp/pkg.tgz -C /www'
+done
+wait_jobs "extract offline packages"
 
 log_info "configure building environment"
-ssh -t el9  "rm -rf ~/pigsty; tar -xf pigsty.tgz; cd ~/pigsty && ./configure -s -i 10.10.10.9"   &
-ssh -t el10 "rm -rf ~/pigsty; tar -xf pigsty.tgz; cd ~/pigsty && ./configure -s -i 10.10.10.10"  &
-ssh -t d12  "rm -rf ~/pigsty; tar -xf pigsty.tgz; cd ~/pigsty && ./configure -s -i 10.10.10.12"  &
-ssh -t d13  "rm -rf ~/pigsty; tar -xf pigsty.tgz; cd ~/pigsty && ./configure -s -i 10.10.10.13"  &
-ssh -t u22  "rm -rf ~/pigsty; tar -xf pigsty.tgz; cd ~/pigsty && ./configure -s -i 10.10.10.22"  &
-ssh -t u24  "rm -rf ~/pigsty; tar -xf pigsty.tgz; cd ~/pigsty && ./configure -s -i 10.10.10.24"  &
-ssh -t u26  "rm -rf ~/pigsty; tar -xf pigsty.tgz; cd ~/pigsty && ./configure -s -i 10.10.10.26"  &
-wait
+for i in "${!BUILD_HOSTS[@]}"; do
+    start_ssh "${BUILD_HOSTS[$i]}" "rm -rf ~/pigsty && tar -xf pigsty.tgz && cd ~/pigsty && ./configure -s -i ${BUILD_IPS[$i]}"
+done
+wait_jobs "configure building environment"
 
 log_info "bootstrap building environment"
-ssh -t el9  "cd ~/pigsty && ./bootstrap" &
-ssh -t el10 "cd ~/pigsty && ./bootstrap" &
-ssh -t d12  "cd ~/pigsty && ./bootstrap" &
-ssh -t d13  "cd ~/pigsty && ./bootstrap" &
-ssh -t u22  "cd ~/pigsty && ./bootstrap" &
-ssh -t u24  "cd ~/pigsty && ./bootstrap" &
-ssh -t u26  "cd ~/pigsty && ./bootstrap" &
-wait
+for host in "${BUILD_HOSTS[@]}"; do
+    start_ssh "${host}" 'cd ~/pigsty && ./bootstrap'
+done
+wait_jobs "bootstrap building environment"
 
 
 #log_info "building bootstrap complete"
